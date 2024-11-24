@@ -1,40 +1,7 @@
-from typing import Any, Generator
+import pytest
 
-
-def filter_by_currency(
-    list_transaction: list[dict[str, Any]], currency="USD"
-) -> Generator[Any, Any, Any]:
-    """Функция, которая принимает на вход список словарей, представляющих транзакции"""
-    if len(list_transaction) > 0:
-        for transaction in list_transaction:
-            if transaction["operationAmount"]["currency"]["code"] == currency:
-                yield transaction
-    else:
-        yield "Ошибка ввода"
-
-
-def transaction_descriptions(
-    list_transactions: list[dict[str, Any]]
-) -> Generator[Any, Any, Any]:
-    """генератор, который принимает список словарей с транзакциями и возвращает описание каждой операции по очереди"""
-    if len(list_transactions) > 0:
-        for transaction in list_transactions:
-            yield transaction["description"]
-    else:
-        yield "Ошибка ввода"
-
-
-def card_number_generator(start: int, stop: int) -> Generator[Any, Any, Any]:
-    """Генератор, который выдает номера банковских"""
-    if start < stop:
-        for number in range(start, stop + 1):
-            zero = "0000000000000000"
-            number_len = len(str(number))
-            card_number = zero[0:-number_len] + str(number)
-            yield f"{card_number[0:5]} {card_number[4:9]} {card_number[8:13]} {card_number[12:17]}"
-    else:
-        yield "Ошибка ввода"
-
+from src.generators import (card_number_generator, filter_by_currency,
+                            transaction_descriptions)
 
 transactions = [
     {
@@ -99,13 +66,49 @@ transactions = [
     },
 ]
 
-# usd_transactions = filter_by_currency(transactions, "USD")
-# for _ in range(2):
-#     print(next(usd_transactions))
 
-# descriptions = transaction_descriptions(transactions)
-# for _ in range(5):
-#     print(next(descriptions))
+def test_filter_by_currency(currency_1, currency_2, currency_3, currency_4, currency_5):
+    function_1 = filter_by_currency(transactions, "USD")
+    function_2 = filter_by_currency([], "USD")
+    function_3 = filter_by_currency(transactions, "RUB")
+    assert next(function_1) == currency_1
+    assert next(function_1) == currency_2
+    assert next(function_2) == currency_3
+    assert next(function_3) == currency_4
+    assert next(function_3) == currency_5
 
-# for card_number in card_number_generator(1, 5):
-#    print(card_number)
+    with pytest.raises(StopIteration):
+        assert next(filter_by_currency(transactions, " "))
+
+
+def test_transaction_descriptions(
+    transaction_1,
+    transaction_2,
+    transaction_3,
+    transaction_4,
+    transaction_5,
+    transaction_6,
+):
+    generator_1 = transaction_descriptions(transactions)
+    generator_2 = transaction_descriptions([])
+    assert next(generator_1) == transaction_1
+    assert next(generator_1) == transaction_2
+    assert next(generator_1) == transaction_3
+    assert next(generator_1) == transaction_4
+    assert next(generator_1) == transaction_5
+    assert next(generator_2) == transaction_6
+
+
+def test_card_number_generator(
+    card_number_1, card_number_2, card_number_3, card_number_4
+):
+    generator_1 = card_number_generator(1, 10)
+    generator_2 = card_number_generator(10, 1)
+    assert next(generator_1) == card_number_1
+    assert next(generator_1) == card_number_2
+    assert next(generator_1) == card_number_3
+    assert next(generator_2) == card_number_4
+
+    with pytest.raises(TypeError):
+        assert next(card_number_generator(5, "some_sring"))
+        assert next(card_number_generator())

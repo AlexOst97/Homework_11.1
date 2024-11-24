@@ -37,6 +37,7 @@ def test_mask_account_card(account_card):
 def test_get_date(date):
     assert get_date("2024-06-05T02:26:18.671407") == date
     assert get_date("2024-11-20T02:26:18.671407") == "20.11.2024"
+
     with pytest.raises(AssertionError):
         assert get_date(" ")
         assert get_date("123")
